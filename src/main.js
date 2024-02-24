@@ -43,10 +43,10 @@ app.get('/twitter-login', function (req, res) {
     );
 
     req.session.twitter = {
-        codeVerifier, state
+        codeVerifier, state, url
     };
 
-    console.debug(`codeVerifier=${codeVerifier}, state=${state}, url=${url}`)
+    // console.debug(`codeVerifier=${codeVerifier}, state=${state}, url=${url}`)
 
     res.redirect(url)
 })
@@ -76,6 +76,7 @@ app.get('/callback', async (req, res) => {
 
         req.session.login = true;
         req.session.twitter = {
+            ...req.session.twitter,
             accessToken,
             refreshToken,
             expiresIn

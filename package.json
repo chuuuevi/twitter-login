@@ -5,8 +5,7 @@
   "main": "src/app.js",
   "type": "module",
   "scripts": {
-    "dev": "node ./src/app.js",
-    "stg": "node ./src/main.js"
+    "dev": "node ./src/main.js"
   },
   "author": "",
   "license": "ISC",
