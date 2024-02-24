@@ -1,0 +1,12 @@
+.DS_Store
+node_modules/
+
+# Editor directories and files
+.idea
+.github
+*.env
+
+dist
+yarn.lock
+package-lock.json
+Dockerfile
