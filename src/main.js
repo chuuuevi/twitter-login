@@ -10,8 +10,9 @@ const httpAgent = proxy ? new HttpsProxyAgent(proxy) : null;
 const TWITTER_CLIENT_ID = process.env.TWITTER_CLIENT_ID;
 const TWITTER_CLIENT_SECRET = process.env.TWITTER_CLIENT_SECRET;
 const CALLBACK_URL = process.env.CALLBACK_URL;
+const BRAND_TWITTER_ID = process.env.BRAND_TWITTER_ID;
 
-// TwitterApiV2Settings.debug = true;
+TwitterApiV2Settings.debug = true;
 
 const client = new TwitterApi(
     {clientId: TWITTER_CLIENT_ID, clientSecret: TWITTER_CLIENT_SECRET},
@@ -20,6 +21,7 @@ const client = new TwitterApi(
 
 const app = express()
 
+// NOTE cookieSession 将 req.session 的所有内容 base64 存储到 cookie(浏览器端)，是不安全的!
 app.use(cookieSession({ name: 'session', secret: 'secretomitted', maxAge: 0 }))
 
 app.get('/', function (req, res) {
@@ -39,7 +41,7 @@ app.use('/logout', function (req, res) {
 app.get('/twitter-login', function (req, res) {
     const {url, codeVerifier, state} = client.generateOAuth2AuthLink(
         CALLBACK_URL,
-        {scope: ['tweet.read', 'users.read', "follows.read", "follows.write", "offline.access"]}
+        {scope: ['tweet.read', 'users.read', "follows.write"]}
     );
 
     req.session.twitter = {
@@ -82,10 +84,31 @@ app.get('/callback', async (req, res) => {
             expiresIn
         };
 
-        res.redirect('/')
+        res.redirect('/');
     } catch (e) {
         console.info(e)
         res.status(403).send(`<h1>Invalid verifier or access tokens!</h1>  <br><a href='/'>Home</a>`);
+    }
+})
+
+app.get('/follow', async (req, res) => {
+    // When authenticating requests to the Twitter API v2 endpoints, you must use keys and tokens from a Twitter developer App that is attached to a Project. You can create a project via the developer portal.
+    if (req.session.login) {
+
+        const loggedClient = new TwitterApi(req.session.twitter.accessToken, {httpAgent});
+
+        const { data: me } =  await loggedClient.v2.me();
+
+        // todo only the basic or pro product support Follows!
+        try {
+            await loggedClient.v2.follow(me.id, BRAND_TWITTER_ID);
+            res.send(`<h1>following ${BRAND_TWITTER_ID} success</h1>`)
+        } catch (e) {
+            console.error(e)
+            res.status(500).send(`<h1>following ${BRAND_TWITTER_ID} failure ${e}</h1> <br><a href='/'>Home</a>`);
+        }
+    } else {
+        res.redirect('/')
     }
 })
 
